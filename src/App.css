@@ -1,0 +1,210 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #242424, #0f0f0f 45%);
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+.app {
+  max-width: 1120px;
+  margin: auto;
+  padding: 30px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0 10px;
+}
+
+.eyebrow {
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 12px;
+}
+
+.hero h1 {
+  font-size: 56px;
+  margin: 0;
+}
+
+.hero p {
+  color: #aaa;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 22px;
+  min-width: 140px;
+  text-align: center;
+}
+
+.stat-box strong {
+  display: block;
+  font-size: 42px;
+}
+
+.stat-box span {
+  color: #aaa;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 30px 0;
+  backdrop-filter: blur(12px);
+}
+
+input,
+select {
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  outline: none;
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-weight: bold;
+  cursor: pointer;
+  background: white;
+  color: black;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.main-btn {
+  background: white;
+  color: black;
+}
+
+.button-row,
+.actions,
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.preview {
+  width: 230px;
+  height: 230px;
+  object-fit: contain;
+  background: #2b2b2b;
+  border-radius: 20px;
+  padding: 10px;
+}
+
+.loading,
+.empty {
+  color: #aaa;
+}
+
+.section {
+  margin-top: 36px;
+}
+
+.closet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px;
+}
+
+.item-card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 15px;
+  text-align: center;
+}
+
+.item-card img {
+  width: 100%;
+  height: 170px;
+  object-fit: contain;
+  background: #2a2a2a;
+  border-radius: 16px;
+}
+
+.item-card h3 {
+  margin-bottom: 5px;
+}
+
+.item-card p {
+  color: #aaa;
+  margin: 4px 0;
+}
+
+.worn {
+  font-size: 13px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tags span {
+  background: #333;
+  padding: 5px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.delete {
+  background: #ff4d4d;
+  color: white;
+}
+
+@media (max-width: 700px) {
+  .app {
+    padding: 18px;
+  }
+
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero h1 {
+    font-size: 44px;
+  }
+
+  .stat-box {
+    width: 100%;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "closet-iq",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "server": "node server.js",
+    "start": "concurrently \"npm run server\" \"npm run dev\""
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "express": "latest",
+    "cors": "latest",
+    "dotenv": "latest",
+    "multer": "latest",
+    "openai": "latest",
+    "axios": "latest",
+    "form-data": "latest",
+    "concurrently": "latest"
+  },
+  "devDependencies": {}
+}
