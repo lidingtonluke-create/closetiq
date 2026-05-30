@@ -78,9 +78,12 @@ export default async function handler(req, res) {
       tags: Array.isArray(data.tags) ? data.tags : [],
     });
   } catch (error) {
+    console.error(error);
+
     return res.status(500).json({
-      error: "AI analysis failed.",
-      details: error.message,
+      error:
+        error?.message ||
+        error?.toString() ||
+        "Unknown AI error",
     });
   }
-}
