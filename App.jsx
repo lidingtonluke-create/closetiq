@@ -28,6 +28,7 @@ function App() {
   const [items, setItems] = useState([]);
   const [file, setFile] = useState(null);
   const [image, setImage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [outfit, setOutfit] = useState([]);
   const [filter, setFilter] = useState("All");
   const [form, setForm] = useState(blankForm);
@@ -57,79 +58,72 @@ function App() {
     setFile(selected);
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setImage(reader.result);
-    };
-
+    reader.onloadend = () => setImage(reader.result);
     reader.readAsDataURL(selected);
   }
 
   async function analyzeClothing() {
-    if (!file) {
-    return alert("Upload a clothing picture first.");
-  }
+    if (!file) return alert("Upload a clothing picture first.");
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const data = new FormData();
-    data.append("image", file);
+    try {
+      const data = new FormData();
+      data.append("image", file);
 
-    const res = await fetch("/api/analyze", {
-      method: "POST",
-      body: data,
-    });
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        body: data,
+      });
 
-    const ai = await res.json();
+      const ai = await res.json();
 
-    if (!res.ok) {
-      throw new Error(ai.details || ai.error || "AI failed.");
+      if (!res.ok) {
+        throw new Error(ai.details || ai.error || "AI failed.");
+      }
+
+      setForm({
+        name: ai.name || "",
+        category: categories.includes(ai.category) ? ai.category : "Shirt",
+        color: ai.color || "",
+        style: ai.style || "",
+        occasion: ai.occasion || "",
+        tags: Array.isArray(ai.tags) ? ai.tags.join(", ") : "",
+      });
+    } catch (err) {
+      alert(err.message || "AI failed.");
+    } finally {
+      setLoading(false);
     }
-
-    setForm({
-      name: ai.name || "",
-      category: categories.includes(ai.category) ? ai.category : "Shirt",
-      color: ai.color || "",
-      style: ai.style || "",
-      occasion: ai.occasion || "",
-      tags: Array.isArray(ai.tags) ? ai.tags.join(", ") : "",
-    });
-   } catch (err) {
-    alert(err.message);
-  } finally {
-    setLoading(false);
   }
-}
 
   async function removeBackground() {
-    if (!file) {
-    return alert("Upload a clothing picture first.");
-  }
+    if (!file) return alert("Upload a clothing picture first.");
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const data = new FormData();
-    data.append("image", file);
+    try {
+      const data = new FormData();
+      data.append("image", file);
 
-    const res = await fetch("/api/remove-bg", {
-      method: "POST",
-      body: data,
-    });
+      const res = await fetch("/api/remove-bg", {
+        method: "POST",
+        body: data,
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (!res.ok || !result.image) {
-      throw new Error(result.error || "Background removal failed.");
+      if (!res.ok || !result.image) {
+        throw new Error(result.error || "Background removal failed.");
+      }
+
+      setImage(result.image);
+    } catch (err) {
+      alert(err.message || "Background removal failed.");
+    } finally {
+      setLoading(false);
     }
-
-    setImage(result.image);
-  } catch (err) {
-    alert(err.message || "Background removal failed.");
-  } finally {
-    setLoading(false);
   }
-}
 
   function addItem() {
     if (!image || !form.name.trim()) {
@@ -261,9 +255,15 @@ function App() {
         {image && <img className="preview" src={image} alt="preview" />}
 
         <div className="button-row">
-          <button onClick={analyzeClothing}>AI Analyze</button>
-          <button onClick={removeBackground}>Remove Background</button>
+          <button onClick={analyzeClothing} disabled={loading}>
+            AI Analyze
+          </button>
+          <button onClick={removeBackground} disabled={loading}>
+            Remove Background
+          </button>
         </div>
+
+        {loading && <p className="loading">Working...</p>}
 
         <input name="name" placeholder="Item name" value={form.name} onChange={handleChange} />
 
