@@ -1,31 +1,36 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(200).json({ message: "Remove BG API is working" });
-  }
-
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-
-    if (!body?.image) {
-      return res.status(400).json({ error: "No image received." });
+    if (req.method !== "POST") {
+      return res.status(200).json({ message: "remove-bg route works" });
     }
 
-    const base64Image = body.image.split(",")[1];
+    const { image } = req.body || {};
 
-    const formData = new FormData();
-    formData.append("image_file_b64", base64Image);
-    formData.append("size", "auto");
+    if (!image) {
+      return res.status(400).json({ error: "No image sent to server." });
+    }
+
+    const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
+
+    const params = new URLSearchParams();
+    params.append("image_file_b64", base64Image);
+    params.append("size", "auto");
 
     const response = await fetch("https://api.remove.bg/v1.0/removebg", {
       method: "POST",
       headers: {
         "X-Api-Key": process.env.REMOVE_BG_API_KEY,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: formData,
+      body: params,
     });
 
     if (!response.ok) {
-      return res.status(500).json({ error: "remove.bg failed." });
+      const errorText = await response.text();
+      return res.status(500).json({
+        error: "remove.bg failed",
+        details: errorText,
+      });
     }
 
     const arrayBuffer = await response.arrayBuffer();
@@ -36,6 +41,9 @@ export default async function handler(req, res) {
       image: `data:image/png;base64,${outputBase64}`,
     });
   } catch (error) {
-    return res.status(500).json({ error: "Background removal crashed." });
+    return res.status(500).json({
+      error: "Background removal crashed",
+      details: error.message,
+    });
   }
 }
