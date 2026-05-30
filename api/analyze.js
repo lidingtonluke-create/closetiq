@@ -86,9 +86,14 @@ Identify REAL colors and REAL clothing type.
       ],
     });
 
-    const raw = completion.choices[0].message.content;
+    const raw = completion.choices[0].message.content || "{}";
 
-    const data = JSON.parse(raw);
+    const cleaned = raw
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    const data = JSON.parse(cleaned);
 
     return res.status(200).json(data);
   } catch (error) {
