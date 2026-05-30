@@ -54,7 +54,20 @@ function App() {
     const selected = e.target.files[0];
     if (!selected) return;
     setFile(selected);
-    setImage(URL.createObjectURL(selected));
+    function handleFile(e) {
+  const selected = e.target.files[0];
+  if (!selected) return;
+
+  setFile(selected);
+
+  const reader = new FileReader();
+
+  reader.onloadend = () => {
+    setImage(reader.result);
+  };
+
+  reader.readAsDataURL(selected);
+}
   }
 
   async function analyzeClothing() {
