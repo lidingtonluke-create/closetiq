@@ -64,20 +64,7 @@ function App() {
     reader.readAsDataURL(selected);
   }
 
-  function analyzeClothing() {
-    if (!image) return alert("Upload a clothing picture first.");
-
-    setForm({
-      name: file?.name?.split(".")[0] || "Clothing Item",
-      category: "Shirt",
-      color: "Black",
-      style: "Casual",
-      occasion: "Everyday",
-      tags: "closet, casual",
-    });
-  }
-
-  async function removeBackground() {
+  async function analyzeClothing() {
     if (!image) {
     return alert("Upload a clothing picture first.");
   }
@@ -85,12 +72,49 @@ function App() {
   setLoading(true);
 
   try {
-    const res = await fetch("/api/remove-bg", {
+    const res = await fetch("/api/analyze", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ image: image }),
+    });
+
+    const ai = await res.json();
+
+    if (!res.ok) {
+      throw new Error(ai.error || "AI failed.");
+    }
+
+    setForm({
+      name: ai.name || "",
+      category: categories.includes(ai.category) ? ai.category : "Shirt",
+      color: ai.color || "",
+      style: ai.style || "",
+      occasion: ai.occasion || "",
+      tags: Array.isArray(ai.tags) ? ai.tags.join(", ") : "",
+    });
+  } catch (err) {
+    alert(err.message || "AI failed to analyze the clothing.");
+  } finally {
+    setLoading(false);
+  }
+}
+
+  async function removeBackground() {
+    if (!file) {
+    return alert("Upload a clothing picture first.");
+  }
+
+  setLoading(true);
+
+  try {
+    const data = new FormData();
+    data.append("image", file);
+
+    const res = await fetch("/api/remove-bg", {
+      method: "POST",
+      body: data,
     });
 
     const result = await res.json();
