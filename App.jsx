@@ -96,7 +96,8 @@ function App() {
     const result = await res.json();
 
     if (!res.ok || !result.image) {
-      throw new Error("Background removal failed.");
+      console.log(result);
+      throw new Error(result.error || "Background removal failed.");
     }
 
     setImage(result.image);
