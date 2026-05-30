@@ -28,7 +28,6 @@ function App() {
   const [items, setItems] = useState([]);
   const [file, setFile] = useState(null);
   const [image, setImage] = useState("");
-  const [loading, setLoading] = useState(false);
   const [outfit, setOutfit] = useState([]);
   const [filter, setFilter] = useState("All");
   const [form, setForm] = useState(blankForm);
@@ -65,44 +64,54 @@ function App() {
     reader.readAsDataURL(selected);
   }
 
-  async function analyzeClothing() {
-    if (!file) return alert("Upload a clothing picture first.");
-    setLoading(true);
+  function analyzeClothing() {
+    if (!image) return alert("Upload a clothing picture first.");
 
-    try {
-      const data = new FormData();
-      data.append("image", file);
+    setForm({
+      name: file?.name?.split(".")[0] || "Clothing Item",
+      category: "Shirt",
+      color: "Black",
+      style: "Casual",
+      occasion: "Everyday",
+      tags: "closet, casual",
+    });
+  }
 
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        body: data,
-      });
+  function removeBackground() {
+    alert("Background removal is turned off for now so the app does not break.");
+  }
 
-      const ai = await res.json();
-      if (!res.ok) throw new Error(ai.error || "AI failed.");
-
-      setForm({
-        name: ai.name || "",
-        category: categories.includes(ai.category) ? ai.category : "Shirt",
-        color: ai.color || "",
-        style: ai.style || "",
-        occasion: ai.occasion || "",
-        tags: Array.isArray(ai.tags) ? ai.tags.join(", ") : "",
-      });
-    } catch (err) {
-      alert(err.message || "AI failed to analyze the clothing.");
-    } finally {
-      setLoading(false);
+  function addItem() {
+    if (!image || !form.name.trim()) {
+      return alert("Add a picture and item name first.");
     }
-  }
 
-  async function removeBackground() {
-    if (!image) {
-    return alert("Upload a clothing picture first.");
-  }
+    const existingItem = items.find((item) => item.id === editingId);
 
-  alert("Background removal is temporarily disabled, but your picture is saved correctly.");
-}
+    const savedItem = {
+      id: editingId || crypto.randomUUID(),
+      image,
+      ...form,
+      tags: form.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      wornCount: existingItem?.wornCount || 0,
+      dateAdded: existingItem?.dateAdded || new Date().toISOString(),
+    };
+
+    if (editingId) {
+      setItems(items.map((item) => (item.id === editingId ? savedItem : item)));
+      setOutfit(outfit.map((item) => (item.id === editingId ? savedItem : item)));
+    } else {
+      setItems([savedItem, ...items]);
+    }
+
+    setEditingId(null);
+    setFile(null);
+    setImage("");
+    setForm(blankForm);
+  }
 
   function deleteItem(id) {
     setItems(items.filter((item) => item.id !== id));
@@ -202,15 +211,9 @@ function App() {
         {image && <img className="preview" src={image} alt="preview" />}
 
         <div className="button-row">
-          <button onClick={analyzeClothing} disabled={loading || editingId}>
-            AI Analyze
-          </button>
-          <button onClick={removeBackground} disabled={loading || !file}>
-            Remove Background
-          </button>
+          <button onClick={analyzeClothing}>AI Analyze</button>
+          <button onClick={removeBackground}>Remove Background</button>
         </div>
-
-        {loading && <p className="loading">Working...</p>}
 
         <input name="name" placeholder="Item name" value={form.name} onChange={handleChange} />
 
@@ -247,11 +250,7 @@ function App() {
           <h2>Generated Outfit</h2>
           <div className="grid">
             {outfit.map((item) => (
-              <ClothingCard
-                key={item.id}
-                item={item}
-                onWear={() => markWorn(item.id)}
-              />
+              <ClothingCard key={item.id} item={item} onWear={() => markWorn(item.id)} />
             ))}
           </div>
         </section>
