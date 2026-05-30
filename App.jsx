@@ -78,8 +78,34 @@ function App() {
   }
 
   function removeBackground() {
-    alert("Background removal is turned off for now so the app does not break.");
+    if (!image) {
+    return alert("Upload a clothing picture first.");
   }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch("/api/remove-bg", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok || !result.image) {
+      throw new Error("Background removal failed.");
+    }
+
+    setImage(result.image);
+  } catch (err) {
+    alert("Background removal failed.");
+  } finally {
+    setLoading(false);
+  }
+}
 
   function addItem() {
     if (!image || !form.name.trim()) {
