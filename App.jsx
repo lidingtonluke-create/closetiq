@@ -97,39 +97,12 @@ function App() {
   }
 
   async function removeBackground() {
-    if (!file) { return alert("Upload a clothing picture first."); } setLoading(true); try { const data = new FormData(); data.append("image", file); const res = await fetch("/api/remove-bg", { method: "POST", body: data, }); let result = {}; try { result = await res.json(); } catch { throw new Error("Invalid server response."); } if (!res.ok) { throw new Error("Background removal failed."); } if (result.image && typeof result.image === "string") { setImage(result.image); } } catch (err) { console.error(err); alert("Background removal failed."); } finally { setLoading(false); } }
-
-  function addItem() {
-    if (!image || !form.name.trim()) {
-      return alert("Add a picture and item name first.");
-    }
-
-    const existingItem = items.find((item) => item.id === editingId);
-
-    const savedItem = {
-      id: editingId || crypto.randomUUID(),
-      image,
-      ...form,
-      tags: form.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      wornCount: existingItem?.wornCount || 0,
-      dateAdded: existingItem?.dateAdded || new Date().toISOString(),
-    };
-
-    if (editingId) {
-      setItems(items.map((item) => (item.id === editingId ? savedItem : item)));
-      setOutfit(outfit.map((item) => (item.id === editingId ? savedItem : item)));
-    } else {
-      setItems([savedItem, ...items]);
-    }
-
-    setEditingId(null);
-    setFile(null);
-    setImage("");
-    setForm(blankForm);
+    if (!image) {
+    return alert("Upload a clothing picture first.");
   }
+
+  alert("Background removal is temporarily disabled, but your picture is saved correctly.");
+}
 
   function deleteItem(id) {
     setItems(items.filter((item) => item.id !== id));
