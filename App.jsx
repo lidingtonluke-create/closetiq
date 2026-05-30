@@ -65,19 +65,19 @@ function App() {
   }
 
   async function analyzeClothing() {
-    if (!image) {
+    if (!file) {
     return alert("Upload a clothing picture first.");
   }
 
   setLoading(true);
 
   try {
+    const data = new FormData();
+    data.append("image", file);
+
     const res = await fetch("/api/analyze", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ image: image }),
+      body: data,
     });
 
     const ai = await res.json();
