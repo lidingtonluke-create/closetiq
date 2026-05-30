@@ -1,20 +1,43 @@
 import OpenAI from "openai";
+import formidable from "formidable";
+import fs from "fs";
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(200).json({ message: "analyze route works" });
+  }
+
   try {
-    if (req.method !== "POST") {
-      return res.status(200).json({ message: "analyze route works" });
-    }
+    const form = formidable({ multiples: false });
 
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
+      });
+    });
 
-    if (!body?.image) {
+    const uploadedFile = Array.isArray(files.image)
+      ? files.image[0]
+      : files.image;
+
+    if (!uploadedFile) {
       return res.status(400).json({ error: "No image received." });
     }
+
+    const imageBuffer = fs.readFileSync(uploadedFile.filepath);
+    const imageBase64 = imageBuffer.toString("base64");
+    const mimeType = uploadedFile.mimetype || "image/jpeg";
 
     const response = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -25,18 +48,11 @@ export default async function handler(req, res) {
             {
               type: "input_text",
               text: `
-You are analyzing a clothing item for a digital closet app.
+Analyze this clothing item for a closet app.
 
-Look carefully at the image and identify:
-- the clothing category
-- the main color or color combo
-- the style
-- the occasion
-- useful tags
+Return ONLY valid JSON, no markdown.
 
-Return ONLY valid JSON. No markdown. No explanation.
-
-Use this exact JSON format:
+Use this format:
 {
   "name": "",
   "category": "",
@@ -46,23 +62,24 @@ Use this exact JSON format:
   "tags": []
 }
 
-Rules:
-- Category must be exactly one of:
+Category must be exactly one of:
 Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory
-- If it has a hood, use Hoodie.
-- If it is long pants, use Pants.
-- If it is athletic shorts, use Shorts.
-- If it is footwear, use Shoes.
-- If it is a T-shirt, polo, tank top, or long sleeve shirt without a hood, use Shirt.
-- If it is a crewneck sweatshirt with no hood, use Sweatshirt.
-- If multiple colors are visible, use format like "Black/Red", "White/Blue", or "Orange/Navy".
-- Do not default to black unless the item is clearly mostly black.
-- The name should be short, like "Red Nike Hoodie" or "Blue Athletic Shorts".
+
+Rules:
+- If it has a hood, category is Hoodie.
+- Crewneck with no hood is Sweatshirt.
+- T-shirt, polo, tank top, or long sleeve without hood is Shirt.
+- Long bottoms are Pants.
+- Short bottoms are Shorts.
+- Footwear is Shoes.
+- Identify real colors. Do not default to black.
+- If multiple colors, use Black/Red, White/Blue, Orange/Navy, etc.
+- Name should be short like "Red Nike Hoodie" or "Blue Athletic Shorts".
               `,
             },
             {
               type: "input_image",
-              image_url: body.image,
+              image_url: `data:${mimeType};base64,${imageBase64}`,
             },
           ],
         },
