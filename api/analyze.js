@@ -15,7 +15,7 @@ const openai = new OpenAI({
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
-      return res.status(200).json({ message: "analyze route works" });
+      return res.status(200).json({ message: "Analyze route works" });
     }
 
     const form = formidable({ multiples: false });
@@ -27,7 +27,9 @@ export default async function handler(req, res) {
       });
     });
 
-    const uploadedFile = Array.isArray(files.image) ? files.image[0] : files.image;
+    const uploadedFile = Array.isArray(files.image)
+      ? files.image[0]
+      : files.image;
 
     if (!uploadedFile) {
       return res.status(400).json({ error: "No image received." });
@@ -39,34 +41,46 @@ export default async function handler(req, res) {
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
       messages: [
-        {
-          role: "system",
-          content:
-            "You only return valid JSON. Do not include markdown, explanations, comments, or extra text.",
-        },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: `
-Look at this clothing item and identify it.
+              text:
+                'Analyze this clothing item. Return ONLY JSON with this shape: {"name":"","category":"","color":"","style":"","occasion":"","tags":[]} Category must be one of: Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory. Identify the real clothing type and real colors.',
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:${mimeType};base64,${base64}`,
+              },
+            },
+          ],
+        },
+      ],
+    });
 
-Return exactly this JSON shape:
-{
-  "name": "short clothing name",
-  "category": "one category",
-  "color": "real visible color or color combo",
-  "style": "style",
-  "occasion": "occasion",
-  "tags": ["tag1", "tag2"]
+    const raw = completion.choices[0].message.content || "{}";
+
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    const jsonText = raw.slice(start, end + 1);
+
+    const data = JSON.parse(jsonText);
+
+    return res.status(200).json({
+      name: data.name || "Clothing Item",
+      category: data.category || "Shirt",
+      color: data.color || "",
+      style: data.style || "",
+      occasion: data.occasion || "",
+      tags: Array.isArray(data.tags) ? data.tags : [],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: "AI analysis failed.",
+      details: error.message,
+    });
+  }
 }
-
-Allowed categories:
-Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory
-
-Rules:
-- If it has a hood, category must be Hoodie.
-- If it is a crewneck with
