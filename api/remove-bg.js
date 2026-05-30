@@ -1,35 +1,58 @@
+import formidable from "formidable";
+import fs from "fs";
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(200).json({ message: "remove-bg route works" });
+  }
+
   try {
-    if (req.method !== "POST") {
-      return res.status(200).json({ message: "remove-bg route works" });
-    }
+    const form = formidable({ multiples: false });
 
-    const { image } = req.body || {};
+    const { files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ fields, files });
+      });
+    });
 
-    if (!image) {
+    const uploadedFile = Array.isArray(files.image)
+      ? files.image[0]
+      : files.image;
+
+    if (!uploadedFile) {
       return res.status(400).json({ error: "No image sent to server." });
     }
 
-    const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
+    const imageBuffer = fs.readFileSync(uploadedFile.filepath);
 
-    const params = new URLSearchParams();
-    params.append("image_file_b64", base64Image);
-    params.append("size", "auto");
+    const removeForm = new FormData();
+    removeForm.append(
+      "image_file",
+      new Blob([imageBuffer], { type: uploadedFile.mimetype || "image/jpeg" }),
+      uploadedFile.originalFilename || "image.jpg"
+    );
+    removeForm.append("size", "auto");
 
     const response = await fetch("https://api.remove.bg/v1.0/removebg", {
       method: "POST",
       headers: {
         "X-Api-Key": process.env.REMOVE_BG_API_KEY,
-        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: params,
+      body: removeForm,
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
+      const details = await response.text();
       return res.status(500).json({
-        error: "remove.bg failed",
-        details: errorText,
+        error: "remove.bg could not remove this image.",
+        details,
       });
     }
 
@@ -42,7 +65,7 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     return res.status(500).json({
-      error: "Background removal crashed",
+      error: "Background removal crashed.",
       details: error.message,
     });
   }
