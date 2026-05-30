@@ -94,7 +94,7 @@ function App() {
       occasion: ai.occasion || "",
       tags: Array.isArray(ai.tags) ? ai.tags.join(", ") : "",
     });
-  } catch (err) {
+   } catch (err) {
     alert(err.message || "AI failed to analyze the clothing.");
   } finally {
     setLoading(false);
