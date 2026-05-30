@@ -15,9 +15,7 @@ const openai = new OpenAI({
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
-      return res.status(200).json({
-        message: "Analyze route works",
-      });
+      return res.status(200).json({ message: "analyze route works" });
     }
 
     const form = formidable({ multiples: false });
@@ -29,20 +27,14 @@ export default async function handler(req, res) {
       });
     });
 
-    const uploadedFile = Array.isArray(files.image)
-      ? files.image[0]
-      : files.image;
+    const uploadedFile = Array.isArray(files.image) ? files.image[0] : files.image;
 
     if (!uploadedFile) {
-      return res.status(400).json({
-        error: "No image received.",
-      });
+      return res.status(400).json({ error: "No image received." });
     }
 
     const imageBuffer = fs.readFileSync(uploadedFile.filepath);
-
     const base64 = imageBuffer.toString("base64");
-
     const mimeType = uploadedFile.mimetype || "image/jpeg";
 
     const completion = await openai.chat.completions.create({
@@ -50,56 +42,31 @@ export default async function handler(req, res) {
       response_format: { type: "json_object" },
       messages: [
         {
+          role: "system",
+          content:
+            "You only return valid JSON. Do not include markdown, explanations, comments, or extra text.",
+        },
+        {
           role: "user",
           content: [
             {
               type: "text",
               text: `
-Analyze this clothing item.
+Look at this clothing item and identify it.
 
-Return ONLY JSON.
-
-Use:
+Return exactly this JSON shape:
 {
-  "name": "",
-  "category": "",
-  "color": "",
-  "style": "",
-  "occasion": "",
-  "tags": []
+  "name": "short clothing name",
+  "category": "one category",
+  "color": "real visible color or color combo",
+  "style": "style",
+  "occasion": "occasion",
+  "tags": ["tag1", "tag2"]
 }
 
-Category must be one of:
+Allowed categories:
 Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory
 
-Identify REAL colors and REAL clothing type.
-              `,
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType};base64,${base64}`,
-              },
-            },
-          ],
-        },
-      ],
-    });
-
-    const raw = completion.choices[0].message.content || "{}";
-
-    const cleaned = raw
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    const data = JSON.parse(cleaned);
-
-    return res.status(200).json(data);
-  } catch (error) {
-    return res.status(500).json({
-      error: "AI analysis failed.",
-      details: error.message,
-    });
-  }
-}
+Rules:
+- If it has a hood, category must be Hoodie.
+- If it is a crewneck with
