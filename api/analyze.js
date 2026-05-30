@@ -13,11 +13,11 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(200).json({ message: "analyze route works" });
-  }
-
   try {
+    if (req.method !== "POST") {
+      return res.status(200).json({ message: "analyze route works" });
+    }
+
     const form = formidable({ multiples: false });
 
     const { files } = await new Promise((resolve, reject) => {
@@ -39,18 +39,19 @@ export default async function handler(req, res) {
     const imageBase64 = imageBuffer.toString("base64");
     const mimeType = uploadedFile.mimetype || "image/jpeg";
 
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      messages: [
         {
           role: "user",
           content: [
             {
-              type: "input_text",
+              type: "text",
               text: `
 Analyze this clothing item for a closet app.
 
-Return ONLY valid JSON, no markdown.
+Return JSON only.
 
 Use this format:
 {
@@ -63,7 +64,7 @@ Use this format:
 }
 
 Category must be exactly one of:
-Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory
+Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory.
 
 Rules:
 - If it has a hood, category is Hoodie.
@@ -72,23 +73,25 @@ Rules:
 - Long bottoms are Pants.
 - Short bottoms are Shorts.
 - Footwear is Shoes.
-- Identify real colors. Do not default to black.
-- If multiple colors, use Black/Red, White/Blue, Orange/Navy, etc.
-- Name should be short like "Red Nike Hoodie" or "Blue Athletic Shorts".
+- Identify actual visible colors.
+- Do not default to black.
+- If multiple colors, use formats like Black/Red, White/Blue, Orange/Navy.
+- Name should be short like "Red Hoodie" or "Blue Athletic Shorts".
               `,
             },
             {
-              type: "input_image",
-              image_url: `data:${mimeType};base64,${imageBase64}`,
+              type: "image_url",
+              image_url: {
+                url: `data:${mimeType};base64,${imageBase64}`,
+              },
             },
           ],
         },
       ],
     });
 
-    const text = response.output_text.trim();
-    const cleaned = text.replace(/```json|```/g, "").trim();
-    const data = JSON.parse(cleaned);
+    const text = response.choices[0].message.content;
+    const data = JSON.parse(text);
 
     return res.status(200).json({
       name: data.name || "Clothing Item",
@@ -101,6 +104,7 @@ Rules:
   } catch (error) {
     return res.status(500).json({
       error: "AI analysis failed.",
-      details: error.message,
+      details: error.message || "Unknown error",
     });
   }
+}
