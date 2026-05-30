@@ -77,7 +77,7 @@ function App() {
     });
   }
 
-  function removeBackground() {
+  async function removeBackground() {
     if (!image) {
     return alert("Upload a clothing picture first.");
   }
@@ -90,19 +90,18 @@ function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ image }),
+      body: JSON.stringify({ image: image }),
     });
 
     const result = await res.json();
 
     if (!res.ok || !result.image) {
-      console.log(result);
       throw new Error(result.error || "Background removal failed.");
     }
 
     setImage(result.image);
   } catch (err) {
-    alert("Background removal failed.");
+    alert(err.message || "Background removal failed.");
   } finally {
     setLoading(false);
   }
