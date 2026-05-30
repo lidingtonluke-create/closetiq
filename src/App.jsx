@@ -65,7 +65,7 @@ function App() {
       const data = new FormData();
       data.append("image", file);
 
-      const res = await fetch("http://localhost:5000/api/analyze", {
+      const res = await fetch("/api/analyze", {
         method: "POST",
         body: data,
       });
@@ -96,7 +96,7 @@ function App() {
       const data = new FormData();
       data.append("image", file);
 
-      const res = await fetch("http://localhost:5000/api/remove-bg", {
+      const res = await fetch("/api/remove-bg", {
         method: "POST",
         body: data,
       });
