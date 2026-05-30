@@ -83,7 +83,7 @@ function App() {
     const ai = await res.json();
 
     if (!res.ok) {
-      throw new Error(ai.error || "AI failed.");
+      throw new Error(ai.details || ai.error || "AI failed.");
     }
 
     setForm({
