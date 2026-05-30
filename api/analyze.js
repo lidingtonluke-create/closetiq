@@ -104,4 +104,3 @@ Rules:
       details: error.message,
     });
   }
-}
