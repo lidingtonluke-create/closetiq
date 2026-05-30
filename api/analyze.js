@@ -1,10 +1,10 @@
 export default function handler(req, res) {
   res.status(200).json({
-    name: "Black Hoodie",
-    category: "Hoodie",
+    name: "Sample Clothing Item",
+    category: "Shirt",
     color: "Black",
-    style: "Streetwear",
-    occasion: "Casual",
-    tags: ["hoodie", "casual", "streetwear"],
+    style: "Casual",
+    occasion: "Everyday",
+    tags: ["sample", "closet", "casual"]
   });
 }
