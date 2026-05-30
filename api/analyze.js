@@ -15,7 +15,9 @@ const openai = new OpenAI({
 export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
-      return res.status(200).json({ message: "analyze route works" });
+      return res.status(200).json({
+        message: "Analyze route works",
+      });
     }
 
     const form = formidable({ multiples: false });
@@ -32,14 +34,18 @@ export default async function handler(req, res) {
       : files.image;
 
     if (!uploadedFile) {
-      return res.status(400).json({ error: "No image received." });
+      return res.status(400).json({
+        error: "No image received.",
+      });
     }
 
     const imageBuffer = fs.readFileSync(uploadedFile.filepath);
-    const imageBase64 = imageBuffer.toString("base64");
+
+    const base64 = imageBuffer.toString("base64");
+
     const mimeType = uploadedFile.mimetype || "image/jpeg";
 
-    const response = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       response_format: { type: "json_object" },
       messages: [
@@ -49,11 +55,11 @@ export default async function handler(req, res) {
             {
               type: "text",
               text: `
-Analyze this clothing item for a closet app.
+Analyze this clothing item.
 
-Return JSON only.
+Return ONLY JSON.
 
-Use this format:
+Use:
 {
   "name": "",
   "category": "",
@@ -63,26 +69,16 @@ Use this format:
   "tags": []
 }
 
-Category must be exactly one of:
-Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory.
+Category must be one of:
+Shirt, Sweatshirt, Hoodie, Pants, Shorts, Shoes, Activity Clothes, Jacket, Hat, Accessory
 
-Rules:
-- If it has a hood, category is Hoodie.
-- Crewneck with no hood is Sweatshirt.
-- T-shirt, polo, tank top, or long sleeve without hood is Shirt.
-- Long bottoms are Pants.
-- Short bottoms are Shorts.
-- Footwear is Shoes.
-- Identify actual visible colors.
-- Do not default to black.
-- If multiple colors, use formats like Black/Red, White/Blue, Orange/Navy.
-- Name should be short like "Red Hoodie" or "Blue Athletic Shorts".
+Identify REAL colors and REAL clothing type.
               `,
             },
             {
               type: "image_url",
               image_url: {
-                url: `data:${mimeType};base64,${imageBase64}`,
+                url: `data:${mimeType};base64,${base64}`,
               },
             },
           ],
@@ -90,21 +86,15 @@ Rules:
       ],
     });
 
-    const text = response.choices[0].message.content;
-    const data = JSON.parse(text);
+    const raw = completion.choices[0].message.content;
 
-    return res.status(200).json({
-      name: data.name || "Clothing Item",
-      category: data.category || "Shirt",
-      color: data.color || "",
-      style: data.style || "",
-      occasion: data.occasion || "",
-      tags: Array.isArray(data.tags) ? data.tags : [],
-    });
+    const data = JSON.parse(raw);
+
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({
       error: "AI analysis failed.",
-      details: error.message || "Unknown error",
+      details: error.message,
     });
   }
 }
